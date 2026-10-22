@@ -39,6 +39,9 @@ yarn-error.log*
 # bkit plugin local runtime state
 .bkit/
 
+# supabase CLI local link cache
+supabase/.temp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -1,7 +1,24 @@
 import { Suspense } from "react";
+import { getReport } from "@/lib/report/getReport";
+import { ReportResultSection } from "@/components/ReportResultSection";
 
 async function ReportContent({ id }: { id: string }) {
-  const placeholderItems = Array.from({ length: 8 }, (_, i) => i + 1);
+  const report = await getReport(id);
+
+  if (!report) {
+    return (
+      <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+        <main className="flex w-full max-w-3xl flex-col gap-4 px-6 py-16 sm:px-16">
+          <h1 className="text-2xl font-bold text-black dark:text-zinc-50">
+            보고서를 찾을 수 없습니다
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            링크가 올바른지 확인해주세요.
+          </p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
@@ -11,30 +28,33 @@ async function ReportContent({ id }: { id: string }) {
             보고서 초안
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            보고서 ID: {id}
+            보고서 ID: {report.id}
           </p>
         </header>
 
-        <div className="rounded-lg border border-dashed border-amber-400 p-4 text-sm text-amber-700 dark:border-amber-600 dark:text-amber-400">
-          (경고 배너 영역) 두 통계의 집계 기간 불일치, 결측치·이상값이 있으면
-          여기에 구체적으로 표시됩니다.
-        </div>
+        {report.aggregationPeriodMismatch && (
+          <div className="rounded-lg border border-dashed border-amber-400 p-4 text-sm text-amber-700 dark:border-amber-600 dark:text-amber-400">
+            {report.aggregationPeriodMismatch.message} (FDI:{" "}
+            {report.aggregationPeriodMismatch.fdiPeriods.join(", ")} / 국내투자:{" "}
+            {report.aggregationPeriodMismatch.tradePeriods.join(", ")})
+          </div>
+        )}
 
-        <section className="flex flex-col gap-4">
-          {placeholderItems.map((n) => (
-            <div
-              key={n}
-              className="rounded-lg border border-zinc-200 p-4 dark:border-zinc-800"
-            >
-              <p className="font-medium text-black dark:text-zinc-50">
-                {n}번 항목
-              </p>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                표 / 그래프 / 해설 문장 영역 (추후 구현 — 8개 항목 구조는
-                기존 보고서 양식 확정 후 채워짐)
-              </p>
-            </div>
-          ))}
+        <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+          <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
+            {report.headline}
+          </h2>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">{report.summary}</p>
+          <p className="text-sm text-zinc-700 dark:text-zinc-300">{report.yearly}</p>
+        </section>
+
+        <ReportResultSection title="해외직접투자(FDI) 현황" table={report.fdiTable} />
+        <ReportResultSection title="국내투자 현황" table={report.tradeTable} />
+
+        <section className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
+          종합 평가·전망, 정부 입장 및 담당 부서는 통계만으로 자동 생성할 수 없는 항목이라
+          직접 작성이 필요합니다.
         </section>
 
         <div className="flex gap-4">
