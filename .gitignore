@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# bkit plugin local runtime state
+.bkit/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
