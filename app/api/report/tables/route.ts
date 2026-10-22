@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildReportTables } from "@/lib/stats/buildReportTables";
+import { checkAggregationPeriod } from "@/lib/stats/checkAggregationPeriod";
 
-// DESIGN.md §2 "FDI 현황 표 / 국내투자 현황 표 각각 완성" 구간.
-// 예외 규칙(집계 기간 비교 등)과 "보고서 생성" 버튼 연동은 다음 단계에서 이어 붙인다.
+// DESIGN.md §2 "FDI 현황 표 / 국내투자 현황 표 각각 완성" + 예외 규칙(집계 기간 비교) 구간.
+// "보고서 생성" 버튼 연동과 "계속 진행?" 확인 UI는 다음 단계에서 이어 붙인다.
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const fdiFile = formData.get("fdiFile");
@@ -24,5 +25,12 @@ export async function POST(request: NextRequest) {
 
   const tables = await buildReportTables(fdiFile, tradeFile);
   const ok = tables.fdi.ok && tables.trade.ok;
-  return NextResponse.json({ ok, ...tables }, { status: ok ? 200 : 400 });
+  const aggregationPeriodMismatch = ok
+    ? checkAggregationPeriod(tables.fdi, tables.trade)
+    : null;
+
+  return NextResponse.json(
+    { ok, ...tables, aggregationPeriodMismatch },
+    { status: ok ? 200 : 400 },
+  );
 }
