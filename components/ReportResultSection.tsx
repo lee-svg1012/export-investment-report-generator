@@ -1,24 +1,21 @@
 import type { ParseResult } from "@/lib/stats/parseStatsFile";
 import { pickChartColumns } from "@/lib/stats/pickChartColumns";
 import type { ComparisonResult } from "@/lib/report/computeComparison";
+import { formatComparisonLine } from "@/lib/report/formatComparisonLine";
 import { StatsBarChart } from "./StatsBarChart";
 import { StatsTable } from "./StatsTable";
 
 function ComparisonLine({ comparison }: { comparison?: ComparisonResult }) {
-  if (!comparison || !comparison.available) {
-    return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        전기 대비 증감률: 비교 데이터 없음
-      </p>
-    );
-  }
-  const text =
-    comparison.percent === null
-      ? "계산할 수 없음 (비교 값이 0)"
-      : `${comparison.percent.toFixed(1)}%`;
+  const available = comparison?.available ?? false;
   return (
-    <p className="text-sm text-zinc-700 dark:text-zinc-300">
-      전기({comparison.comparePeriod}, {comparison.compareValue}) 대비 증감률: {text}
+    <p
+      className={
+        available
+          ? "text-sm text-zinc-700 dark:text-zinc-300"
+          : "text-sm text-zinc-500 dark:text-zinc-400"
+      }
+    >
+      {formatComparisonLine(comparison)}
     </p>
   );
 }

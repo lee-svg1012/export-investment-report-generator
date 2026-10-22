@@ -66,20 +66,18 @@ async function ReportContent({ id }: { id: string }) {
         </section>
 
         <div className="flex gap-4">
-          <button
-            type="button"
-            disabled
-            className="h-12 flex-1 rounded-full border border-zinc-300 px-5 disabled:opacity-40 dark:border-zinc-700"
+          <a
+            href={`/api/report/${report.id}/word`}
+            className="flex h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 px-5 text-center dark:border-zinc-700"
           >
             워드로 내보내기
-          </button>
-          <button
-            type="button"
-            disabled
-            className="h-12 flex-1 rounded-full border border-zinc-300 px-5 disabled:opacity-40 dark:border-zinc-700"
+          </a>
+          <a
+            href={`/api/report/${report.id}/pdf`}
+            className="flex h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 px-5 text-center dark:border-zinc-700"
           >
             PDF로 내보내기
-          </button>
+          </a>
         </div>
       </main>
     </div>

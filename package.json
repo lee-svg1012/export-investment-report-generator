@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@supabase/supabase-js": "^2.118.0",
+    "docx": "^9.13.0",
     "nanoid": "^6.0.2",
     "next": "16.4.2",
     "react": "19.3.0",
