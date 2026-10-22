@@ -6,13 +6,16 @@ function UploadCard({
   description: string;
 }) {
   return (
-    <label className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+    <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
       <span className="font-medium text-black dark:text-zinc-50">{title}</span>
       <span className="text-sm text-zinc-500 dark:text-zinc-400">
         {description}
       </span>
-      <input type="file" accept=".xlsx,.xls,.csv" className="mt-2 text-sm" />
-    </label>
+      <label className="mt-2 inline-flex w-fit cursor-pointer items-center rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background">
+        파일 선택
+        <input type="file" accept=".xlsx,.xls,.csv" className="sr-only" />
+      </label>
+    </div>
   );
 }
 
