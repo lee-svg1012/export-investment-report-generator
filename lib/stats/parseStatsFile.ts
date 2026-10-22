@@ -36,11 +36,18 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
     };
   }
 
-  const buffer = await file.arrayBuffer();
-
   let workbook: XLSX.WorkBook;
   try {
-    workbook = XLSX.read(buffer, { type: "array" });
+    if (extension === ".csv") {
+      // CSV는 일반 텍스트라 file.text()로 UTF-8을 올바르게 디코딩해야 한글 헤더/값이
+      // 깨지지 않는다. arrayBuffer + type:"array"로 읽으면 바이트를 다른 인코딩으로
+      // 잘못 해석해 한글이 깨진다.
+      const text = await file.text();
+      workbook = XLSX.read(text, { type: "string" });
+    } else {
+      const buffer = await file.arrayBuffer();
+      workbook = XLSX.read(buffer, { type: "array" });
+    }
   } catch {
     return {
       ok: false,
