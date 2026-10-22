@@ -1,9 +1,21 @@
+"use client";
+
+import { useState } from "react";
+
+function formatFileLabel(file: File | null) {
+  return file ? file.name : "선택된 파일 없음";
+}
+
 function UploadCard({
   title,
   description,
+  file,
+  onFileChange,
 }: {
   title: string;
   description: string;
+  file: File | null;
+  onFileChange: (file: File | null) => void;
 }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
@@ -13,13 +25,27 @@ function UploadCard({
       </span>
       <label className="mt-2 inline-flex w-fit cursor-pointer items-center rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background">
         파일 선택
-        <input type="file" accept=".xlsx,.xls,.csv" className="sr-only" />
+        <input
+          type="file"
+          accept=".xlsx,.xls,.csv"
+          className="sr-only"
+          onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+        />
       </label>
+      <span className="text-sm text-zinc-600 dark:text-zinc-300">
+        {formatFileLabel(file)}
+      </span>
     </div>
   );
 }
 
 export default function Home() {
+  const [tradeFile, setTradeFile] = useState<File | null>(null);
+  const [fdiFile, setFdiFile] = useState<File | null>(null);
+  const [compareFile, setCompareFile] = useState<File | null>(null);
+
+  const canGenerate = tradeFile !== null && fdiFile !== null;
+
   return (
     <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
       <main className="flex w-full max-w-3xl flex-col gap-10 px-6 py-16 sm:px-16">
@@ -31,16 +57,22 @@ export default function Home() {
           <UploadCard
             title="산업통상부 수출입 통계"
             description="국내투자 현황 통계 파일 (xlsx/csv)"
+            file={tradeFile}
+            onFileChange={setTradeFile}
           />
           <UploadCard
             title="수출입은행 해외투자통계"
             description="해외직접투자(FDI) 현황 통계 파일 (xlsx/csv)"
+            file={fdiFile}
+            onFileChange={setFdiFile}
           />
         </section>
 
         <UploadCard
           title="(선택) 비교할 과거 통계 파일"
           description="전월/전년 대비 증감률 계산용 — 없으면 비교 없이 진행"
+          file={compareFile}
+          onFileChange={setCompareFile}
         />
 
         <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
@@ -49,7 +81,7 @@ export default function Home() {
 
         <button
           type="button"
-          disabled
+          disabled={!canGenerate}
           className="h-12 w-full rounded-full bg-foreground px-5 text-background disabled:opacity-40 md:w-[200px]"
         >
           보고서 생성
