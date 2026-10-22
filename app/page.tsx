@@ -19,6 +19,10 @@ type ReportTablesResponse = {
   aggregationPeriodMismatch: AggregationPeriodMismatch;
 };
 
+type NarrativeResponse =
+  | { ok: true; headline: string; summary: string; yearly: string }
+  | { ok: false; error: string };
+
 function formatFileLabel(file: File | null) {
   return file ? file.name : "선택된 파일 없음";
 }
@@ -83,6 +87,7 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [result, setResult] = useState<ReportTablesResponse | null>(null);
+  const [narrative, setNarrative] = useState<NarrativeResponse | null>(null);
 
   const canGenerate = tradeFile !== null && fdiFile !== null && !isGenerating;
 
@@ -92,6 +97,7 @@ export default function Home() {
     setIsGenerating(true);
     setGenerationError(null);
     setResult(null);
+    setNarrative(null);
 
     const formData = new FormData();
     formData.append("fdiFile", fdiFile);
@@ -125,6 +131,15 @@ export default function Home() {
     }
 
     setResult(data);
+
+    const narrativeResponse = await fetch("/api/report/narrative", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fdi: data.fdi, trade: data.trade }),
+    });
+    const narrativeData: NarrativeResponse = await narrativeResponse.json();
+    setNarrative(narrativeData);
+
     setIsGenerating(false);
   }
 
@@ -179,8 +194,36 @@ export default function Home() {
                 {result.aggregationPeriodMismatch.tradePeriods.join(", ")})
               </div>
             )}
+            {narrative && (
+              <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+                {narrative.ok ? (
+                  <>
+                    <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
+                      {narrative.headline}
+                    </h2>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {narrative.summary}
+                    </p>
+                    <p className="text-sm text-zinc-700 dark:text-zinc-300">
+                      {narrative.yearly}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    해설 문장 생성 실패: {narrative.error}
+                  </p>
+                )}
+              </section>
+            )}
+
             <ResultSection title="해외직접투자(FDI) 현황" table={result.fdi} />
             <ResultSection title="국내투자 현황" table={result.trade} />
+
+            <section className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+              업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
+              종합 평가·전망, 정부 입장 및 담당 부서는 통계만으로 자동 생성할 수 없는 항목이라
+              직접 작성이 필요합니다.
+            </section>
           </div>
         )}
       </main>
