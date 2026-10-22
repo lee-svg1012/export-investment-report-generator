@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { getSupabaseServerClient } from "@/lib/supabase/serverClient";
 import type { ParseResult } from "@/lib/stats/parseStatsFile";
-import type { AggregationPeriodMismatchRecord } from "./reportRecord";
+import type { AggregationPeriodMismatchRecord, ComparisonRecord } from "./reportRecord";
 
 export async function saveReport(input: {
   fdiFile: File;
@@ -12,6 +12,7 @@ export async function saveReport(input: {
   summary: string;
   yearly: string;
   aggregationPeriodMismatch: AggregationPeriodMismatchRecord;
+  comparison: ComparisonRecord;
 }): Promise<string> {
   const supabase = getSupabaseServerClient();
   // nanoid 기본 생성기·기본 길이(21자) 그대로 사용 — 추측 불가능한 비공개 링크 ID (보안 점검 SEC-1).
@@ -39,6 +40,7 @@ export async function saveReport(input: {
     summary: input.summary,
     yearly: input.yearly,
     aggregation_period_mismatch: input.aggregationPeriodMismatch,
+    comparison: input.comparison,
   });
   if (error) {
     throw new Error(`보고서 저장 실패: ${error.message}`);

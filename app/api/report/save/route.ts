@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
       summary: payload.summary,
       yearly: payload.yearly,
       aggregationPeriodMismatch: payload.aggregationPeriodMismatch,
+      comparison: payload.comparison ?? null,
     });
     return NextResponse.json({ ok: true, id });
   } catch (err) {

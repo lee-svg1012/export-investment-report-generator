@@ -19,5 +19,6 @@ export async function getReport(id: string): Promise<ReportRecord | null> {
     summary: data.summary,
     yearly: data.yearly,
     aggregationPeriodMismatch: data.aggregation_period_mismatch,
+    comparison: data.comparison,
   };
 }

@@ -10,11 +10,16 @@ type AggregationPeriodMismatch = {
   tradePeriods: string[];
 } | null;
 
+type ComparisonResult =
+  | { available: true; percent: number | null; comparePeriod: string; compareValue: number }
+  | { available: false };
+
 type ReportTablesResponse = {
   ok: boolean;
   fdi: ParseResult;
   trade: ParseResult;
   aggregationPeriodMismatch: AggregationPeriodMismatch;
+  comparison: { fdi: ComparisonResult; trade: ComparisonResult } | null;
 };
 
 type NarrativeResponse =
@@ -81,6 +86,7 @@ export default function Home() {
     const tablesFormData = new FormData();
     tablesFormData.append("fdiFile", fdiFile);
     tablesFormData.append("tradeFile", tradeFile);
+    if (compareFile) tablesFormData.append("compareFile", compareFile);
 
     const tablesResponse = await fetch("/api/report/tables", {
       method: "POST",
@@ -134,6 +140,7 @@ export default function Home() {
         summary: narrativeData.summary,
         yearly: narrativeData.yearly,
         aggregationPeriodMismatch: tablesData.aggregationPeriodMismatch,
+        comparison: tablesData.comparison,
       }),
     );
 

@@ -48,8 +48,16 @@ async function ReportContent({ id }: { id: string }) {
           <p className="text-sm text-zinc-700 dark:text-zinc-300">{report.yearly}</p>
         </section>
 
-        <ReportResultSection title="해외직접투자(FDI) 현황" table={report.fdiTable} />
-        <ReportResultSection title="국내투자 현황" table={report.tradeTable} />
+        <ReportResultSection
+          title="해외직접투자(FDI) 현황"
+          table={report.fdiTable}
+          comparison={report.comparison?.fdi}
+        />
+        <ReportResultSection
+          title="국내투자 현황"
+          table={report.tradeTable}
+          comparison={report.comparison?.trade}
+        />
 
         <section className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
           업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
