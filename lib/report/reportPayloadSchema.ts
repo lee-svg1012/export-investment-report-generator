@@ -21,13 +21,10 @@ const parseResultSchema = z.union([
   }),
 ]);
 
-const comparisonResultSchema = z.union([
-  z.object({
-    available: z.literal(true),
-    percent: z.number().nullable(),
-    comparePeriod: z.string(),
-    compareValue: z.number(),
-  }),
+// 증감률을 표 전체 요약 한 줄이 아니라 행마다 보여주기로 결정(2026-10-23) — 표의 행과
+// 1:1로 대응하는 배열이며, 비교 파일이 없으면 null(열 자체를 숨김).
+const rowComparisonSchema = z.union([
+  z.object({ available: z.literal(true), percent: z.number().nullable() }),
   z.object({ available: z.literal(false) }),
 ]);
 
@@ -47,8 +44,8 @@ export const reportPayloadSchema = z.object({
     .nullable(),
   comparison: z
     .object({
-      fdi: comparisonResultSchema,
-      trade: comparisonResultSchema,
+      fdi: z.array(rowComparisonSchema).nullable(),
+      trade: z.array(rowComparisonSchema).nullable(),
     })
     .nullable(),
 });

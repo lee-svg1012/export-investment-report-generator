@@ -1,6 +1,11 @@
 import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
 import type { ReportRecord } from "./reportRecord";
-import { formatComparisonLine } from "./formatComparisonLine";
+import type { RowComparison } from "./computeRowComparisons";
+
+function formatRowComparison(comparison: RowComparison | undefined): string {
+  if (!comparison || !comparison.available) return "비교 데이터 없음";
+  return comparison.percent === null ? "계산할 수 없음 (비교 값 0)" : `${comparison.percent.toFixed(1)}%`;
+}
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 11 },
@@ -19,8 +24,17 @@ const styles = StyleSheet.create({
   cell: { flex: 1, borderBottom: 1, borderColor: "#ddd", padding: 4 },
 });
 
-function StatsTablePdf({ table }: { table: ReportRecord["fdiTable"] }) {
+// 증감률을 표 전체 요약 한 줄이 아니라 행마다 보여주기로 결정(2026-10-23) — 비교 파일을
+// 아예 안 올렸으면(comparison이 null/undefined) 증감률 열 자체를 추가하지 않는다.
+function StatsTablePdf({
+  table,
+  comparison,
+}: {
+  table: ReportRecord["fdiTable"];
+  comparison?: RowComparison[] | null;
+}) {
   if (!table.ok) return null;
+  const showComparisonColumn = Array.isArray(comparison);
   return (
     <View style={styles.table}>
       <View style={styles.row}>
@@ -29,6 +43,7 @@ function StatsTablePdf({ table }: { table: ReportRecord["fdiTable"] }) {
             {column}
           </Text>
         ))}
+        {showComparisonColumn && <Text style={styles.cellHeader}>전기 대비 증감률</Text>}
       </View>
       {table.rows.map((row, i) => (
         <View key={i} style={styles.row}>
@@ -37,6 +52,9 @@ function StatsTablePdf({ table }: { table: ReportRecord["fdiTable"] }) {
               {String(row[column])}
             </Text>
           ))}
+          {showComparisonColumn && (
+            <Text style={styles.cell}>{formatRowComparison(comparison[i])}</Text>
+          )}
         </View>
       ))}
     </View>
@@ -52,14 +70,12 @@ function ReportPdfDocument({ report }: { report: ReportRecord }) {
         <Text style={styles.p}>{report.yearly}</Text>
 
         <Text style={styles.h2}>해외직접투자(FDI) 현황</Text>
-        <StatsTablePdf table={report.fdiTable} />
-        <Text style={styles.p}>{formatComparisonLine(report.comparison?.fdi)}</Text>
+        <StatsTablePdf table={report.fdiTable} comparison={report.comparison?.fdi} />
 
         {report.tradeTable ? (
           <>
             <Text style={styles.h2}>국내투자 현황</Text>
-            <StatsTablePdf table={report.tradeTable} />
-            <Text style={styles.p}>{formatComparisonLine(report.comparison?.trade)}</Text>
+            <StatsTablePdf table={report.tradeTable} comparison={report.comparison?.trade} />
           </>
         ) : (
           <Text style={styles.p}>

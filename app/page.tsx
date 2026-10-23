@@ -10,16 +10,15 @@ type AggregationPeriodMismatch = {
   tradePeriods: string[];
 } | null;
 
-type ComparisonResult =
-  | { available: true; percent: number | null; comparePeriod: string; compareValue: number }
-  | { available: false };
+// 표의 행마다 증감률을 매긴다(2026-10-23 결정) — 비교 파일이 없으면 null(열 자체를 숨김).
+type RowComparison = { available: true; percent: number | null } | { available: false };
 
 type ReportTablesResponse = {
   ok: boolean;
   fdi: ParseResult;
   trade: ParseResult | null;
   aggregationPeriodMismatch: AggregationPeriodMismatch;
-  comparison: { fdi: ComparisonResult; trade: ComparisonResult } | null;
+  comparison: { fdi: RowComparison[] | null; trade: RowComparison[] | null } | null;
 };
 
 type NarrativeResponse =

@@ -3,7 +3,7 @@ import { buildReportTables } from "@/lib/stats/buildReportTables";
 import { checkAggregationPeriod } from "@/lib/stats/checkAggregationPeriod";
 import { checkFormatRecognized } from "@/lib/stats/checkFormatRecognized";
 import { parseStatsFile } from "@/lib/stats/parseStatsFile";
-import { computeComparison } from "@/lib/report/computeComparison";
+import { computeRowComparisons } from "@/lib/report/computeRowComparisons";
 
 // DESIGN.md §2 "FDI 현황 표 / 국내투자 현황 표 각각 완성" + 예외 규칙(집계 기간 비교) 구간.
 // 산업통상부 자료(tradeFile)는 작성 주기가 FDI보다 길어 매번 있는 게 아니므로 선택(optional)이다 —
@@ -42,16 +42,11 @@ export async function POST(request: NextRequest) {
 
   const compareTable =
     compareFile instanceof File ? await parseStatsFile(compareFile) : null;
+  // 표의 행마다 증감률을 매긴다(2026-10-23 결정) — compareTable 자체가 없으면 null(열 숨김).
   const comparison = ok
     ? {
-        fdi: computeComparison(
-          "해외직접투자(FDI) 현황",
-          tables.fdi,
-          compareTable?.ok ? compareTable : null,
-        ),
-        trade: tables.trade?.ok
-          ? computeComparison("국내투자 현황", tables.trade, compareTable?.ok ? compareTable : null)
-          : { available: false as const },
+        fdi: computeRowComparisons(tables.fdi, compareTable),
+        trade: tables.trade?.ok ? computeRowComparisons(tables.trade, compareTable) : null,
       }
     : null;
 

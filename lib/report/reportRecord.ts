@@ -1,5 +1,5 @@
 import type { ParseResult } from "@/lib/stats/parseStatsFile";
-import type { ComparisonResult } from "./computeComparison";
+import type { RowComparison } from "./computeRowComparisons";
 
 export type AggregationPeriodMismatchRecord = {
   message: string;
@@ -7,9 +7,10 @@ export type AggregationPeriodMismatchRecord = {
   tradePeriods: string[];
 } | null;
 
+// fdi/trade 각각 표의 행과 1:1로 대응하는 증감률 배열 — 비교 파일이 없으면 null(열 자체를 숨김).
 export type ComparisonRecord = {
-  fdi: ComparisonResult;
-  trade: ComparisonResult;
+  fdi: RowComparison[] | null;
+  trade: RowComparison[] | null;
 } | null;
 
 export type ReportRecord = {

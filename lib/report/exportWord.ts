@@ -10,31 +10,50 @@ import {
   WidthType,
 } from "docx";
 import type { ReportRecord } from "./reportRecord";
-import { formatComparisonLine } from "./formatComparisonLine";
+import type { RowComparison } from "./computeRowComparisons";
 
-function buildStatsTable(table: ReportRecord["fdiTable"]): (Table | Paragraph)[] {
+function formatRowComparison(comparison: RowComparison | undefined): string {
+  if (!comparison || !comparison.available) return "비교 데이터 없음";
+  return comparison.percent === null ? "계산할 수 없음 (비교 값 0)" : `${comparison.percent.toFixed(1)}%`;
+}
+
+// 증감률을 표 전체 요약 한 줄이 아니라 행마다 보여주기로 결정(2026-10-23) — 비교 파일을
+// 아예 안 올렸으면(comparison이 null/undefined) 증감률 열 자체를 추가하지 않는다.
+function buildStatsTable(
+  table: ReportRecord["fdiTable"],
+  comparison?: RowComparison[] | null,
+): (Table | Paragraph)[] {
   if (!table.ok) return [];
-
-  const headerRow = new TableRow({
-    children: table.columns.map(
-      (column) =>
-        new TableCell({
-          children: [new Paragraph({ children: [new TextRun({ text: column, bold: true })] })],
-        }),
-    ),
-  });
-
-  const dataRows = table.rows.map(
-    (row) =>
-      new TableRow({
-        children: table.columns.map(
-          (column) =>
-            new TableCell({
-              children: [new Paragraph(String(row[column]))],
-            }),
-        ),
+  const showComparisonColumn = Array.isArray(comparison);
+  const headerCells = table.columns.map(
+    (column) =>
+      new TableCell({
+        children: [new Paragraph({ children: [new TextRun({ text: column, bold: true })] })],
       }),
   );
+  if (showComparisonColumn) {
+    headerCells.push(
+      new TableCell({
+        children: [
+          new Paragraph({ children: [new TextRun({ text: "전기 대비 증감률", bold: true })] }),
+        ],
+      }),
+    );
+  }
+  const headerRow = new TableRow({ children: headerCells });
+
+  const dataRows = table.rows.map((row, i) => {
+    const cells = table.columns.map(
+      (column) =>
+        new TableCell({
+          children: [new Paragraph(String(row[column]))],
+        }),
+    );
+    if (showComparisonColumn) {
+      cells.push(new TableCell({ children: [new Paragraph(formatRowComparison(comparison[i]))] }));
+    }
+    return new TableRow({ children: cells });
+  });
 
   return [
     new Table({
@@ -54,14 +73,12 @@ export async function exportWord(report: ReportRecord): Promise<Buffer> {
           new Paragraph(report.yearly),
 
           new Paragraph({ text: "해외직접투자(FDI) 현황", heading: HeadingLevel.HEADING_2 }),
-          ...buildStatsTable(report.fdiTable),
-          new Paragraph(formatComparisonLine(report.comparison?.fdi)),
+          ...buildStatsTable(report.fdiTable, report.comparison?.fdi),
 
           ...(report.tradeTable
             ? [
                 new Paragraph({ text: "국내투자 현황", heading: HeadingLevel.HEADING_2 }),
-                ...buildStatsTable(report.tradeTable),
-                new Paragraph(formatComparisonLine(report.comparison?.trade)),
+                ...buildStatsTable(report.tradeTable, report.comparison?.trade),
               ]
             : [
                 new Paragraph({
