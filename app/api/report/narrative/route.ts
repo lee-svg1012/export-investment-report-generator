@@ -26,9 +26,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.json();
-  const fdi: ParseResult | undefined = body?.fdi;
-  const trade: ParseResult | null | undefined = body?.trade;
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "요청 본문이 올바른 JSON 형식이 아닙니다." },
+      { status: 400 },
+    );
+  }
+
+  const parsedBody = body as { fdi?: ParseResult; trade?: ParseResult | null };
+  const fdi = parsedBody?.fdi;
+  const trade = parsedBody?.trade;
 
   if (!fdi?.ok) {
     return NextResponse.json(

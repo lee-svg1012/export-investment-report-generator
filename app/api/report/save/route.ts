@@ -74,8 +74,11 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: true, id });
   } catch (err) {
+    // 보안 점검 결과: Supabase 내부 에러 메시지(테이블·컬럼명 등)를 그대로 클라이언트에 주면 안 된다.
+    // 상세 내용은 서버 로그로만 남기고, 클라이언트에는 일반화된 메시지만 전달한다.
+    console.error("[api/report/save] 보고서 저장 실패:", err);
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : "알 수 없는 오류" },
+      { ok: false, error: "보고서 저장에 실패했습니다. 잠시 후 다시 시도해주세요." },
       { status: 500 },
     );
   }
