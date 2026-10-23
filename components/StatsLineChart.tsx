@@ -11,6 +11,10 @@ import {
 } from "recharts";
 import type { ParsedRow } from "@/lib/stats/parseStatsFile";
 
+function formatAxisTick(value: number): string {
+  return Math.round(value).toLocaleString();
+}
+
 export function StatsLineChart({
   rows,
   labelColumn,
@@ -25,7 +29,7 @@ export function StatsLineChart({
       <LineChart data={rows}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey={labelColumn} />
-        <YAxis />
+        <YAxis orientation="right" tickFormatter={formatAxisTick} />
         <Tooltip />
         <Line type="monotone" dataKey={valueColumn} stroke="#171717" />
       </LineChart>
