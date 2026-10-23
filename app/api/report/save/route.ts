@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { saveReport } from "@/lib/report/saveReport";
+import { MAX_FILE_SIZE_BYTES, formatMaxFileSize } from "@/lib/stats/fileLimits";
 
 // PLAN.md 13번: 업로드 원본 파일(Storage) + 표·해설(DB)을 묶어 저장하고 비공개 링크용 id를 발급한다.
 export async function POST(request: NextRequest) {
@@ -15,6 +16,15 @@ export async function POST(request: NextRequest) {
   ) {
     return NextResponse.json(
       { ok: false, error: "저장에 필요한 데이터가 부족합니다." },
+      { status: 400 },
+    );
+  }
+
+  // /api/report/tables를 거치지 않고 이 엔드포인트를 직접 호출하는 경우를 대비해
+  // 저장(Storage 업로드) 직전에도 용량 상한을 독립적으로 재검사한다.
+  if (fdiFile.size > MAX_FILE_SIZE_BYTES || tradeFile.size > MAX_FILE_SIZE_BYTES) {
+    return NextResponse.json(
+      { ok: false, error: `파일 용량이 너무 큽니다 (${formatMaxFileSize()} 이하만 업로드할 수 있습니다).` },
       { status: 400 },
     );
   }

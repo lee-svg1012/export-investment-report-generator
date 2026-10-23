@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { MAX_FILE_SIZE_BYTES, MAX_ROWS, MAX_COLUMNS, formatMaxFileSize } from "./fileLimits";
 
 const ALLOWED_EXTENSIONS = [".xlsx", ".xls", ".csv"];
 
@@ -30,6 +31,17 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
         message: `지원하지 않는 파일 형식입니다 (${
           extension || "확장자 없음"
         }). xlsx, xls, csv 파일만 업로드할 수 있습니다.`,
+        row: 0,
+        column: "",
+      },
+    };
+  }
+
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    return {
+      ok: false,
+      error: {
+        message: `파일 용량이 너무 큽니다 (${formatMaxFileSize()} 이하만 업로드할 수 있습니다).`,
         row: 0,
         column: "",
       },
@@ -78,10 +90,32 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
     cell === null || cell === "" ? `열${i + 1}` : String(cell),
   );
 
+  if (columns.length > MAX_COLUMNS) {
+    return {
+      ok: false,
+      error: {
+        message: `열 수가 너무 많습니다 (최대 ${MAX_COLUMNS}열까지 지원합니다).`,
+        row: 0,
+        column: "",
+      },
+    };
+  }
+
   if (dataRows.length === 0) {
     return {
       ok: false,
       error: { message: "제목 행만 있고 실제 데이터 행이 없습니다.", row: 1, column: "" },
+    };
+  }
+
+  if (dataRows.length > MAX_ROWS) {
+    return {
+      ok: false,
+      error: {
+        message: `데이터 행 수가 너무 많습니다 (최대 ${MAX_ROWS.toLocaleString()}행까지 지원합니다).`,
+        row: 0,
+        column: "",
+      },
     };
   }
 
