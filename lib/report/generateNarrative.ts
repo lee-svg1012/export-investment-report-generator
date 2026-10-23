@@ -18,22 +18,19 @@ const SYSTEM_PROMPT = `너는 정부 보고서의 통계 해설 문장을 쓰는
 
 // PRD 5장 규칙: "추정치 언급 시 반드시 '추정'임을 표기." 시스템 프롬프트로 지시만 하고 끝내지 않고,
 // 실제 응답에 추정성 표현이 섞였는데 "추정" 표기가 빠졌으면 서버에서 거부한다(검증 후 거부 방식).
-const SPECULATION_WORDS = ["예상", "전망", "추측", "것으로 보인다", "듯하다", "아마"];
+// "것으로 보인다"는 미래 예측이 아니라 관찰된 추세를 설명할 때도 흔히 쓰는 어투라 목록에서 뺐다
+// (2026-10-23, 오탐 소지로 좁힘) — 더 명확히 전망·추측을 뜻하는 표현만 남긴다.
+const SPECULATION_WORDS = ["예상", "전망", "추측", "듯하다", "아마"];
 
 function hasUnlabeledSpeculation(text: string): boolean {
   const hasSpeculativeWord = SPECULATION_WORDS.some((word) => text.includes(word));
   return hasSpeculativeWord && !text.includes("추정");
 }
 
-export async function generateNarrative(facts: {
-  fdi: SeriesFacts | null;
-  trade: SeriesFacts | null;
-}): Promise<NarrativeResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return { ok: false, error: "OPENAI_API_KEY가 설정되어 있지 않습니다." };
-  }
-
+async function requestNarrative(
+  apiKey: string,
+  facts: { fdi: SeriesFacts | null; trade: SeriesFacts | null },
+): Promise<NarrativeResult> {
   let response: Response;
   try {
     response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -81,4 +78,28 @@ export async function generateNarrative(facts: {
   } catch {
     return { ok: false, error: "OpenAI 응답을 JSON으로 해석할 수 없습니다." };
   }
+}
+
+// AI 응답은 매번 조금씩 달라지므로, "추정" 표기 없는 추정성 표현이 섞여 거부된 경우 사용자가
+// 업로드부터 다시 하지 않도록 서버에서 최대 2번까지 자동으로 다시 생성해본다(2026-10-23).
+const MAX_SPECULATION_RETRIES = 2;
+
+export async function generateNarrative(facts: {
+  fdi: SeriesFacts | null;
+  trade: SeriesFacts | null;
+}): Promise<NarrativeResult> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return { ok: false, error: "OPENAI_API_KEY가 설정되어 있지 않습니다." };
+  }
+
+  let result = await requestNarrative(apiKey, facts);
+  for (
+    let attempt = 0;
+    attempt < MAX_SPECULATION_RETRIES && !result.ok && result.error.includes("추정");
+    attempt++
+  ) {
+    result = await requestNarrative(apiKey, facts);
+  }
+  return result;
 }
