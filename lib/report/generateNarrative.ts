@@ -16,6 +16,15 @@ const SYSTEM_PROMPT = `너는 정부 보고서의 통계 해설 문장을 쓰는
    - summary: 업로드된 통계(하나 또는 둘)의 최신 수치를 요약하는 2~3문장
    - yearly: 기간별 추이를 요약하는 2~3문장`;
 
+// PRD 5장 규칙: "추정치 언급 시 반드시 '추정'임을 표기." 시스템 프롬프트로 지시만 하고 끝내지 않고,
+// 실제 응답에 추정성 표현이 섞였는데 "추정" 표기가 빠졌으면 서버에서 거부한다(검증 후 거부 방식).
+const SPECULATION_WORDS = ["예상", "전망", "추측", "것으로 보인다", "듯하다", "아마"];
+
+function hasUnlabeledSpeculation(text: string): boolean {
+  const hasSpeculativeWord = SPECULATION_WORDS.some((word) => text.includes(word));
+  return hasSpeculativeWord && !text.includes("추정");
+}
+
 export async function generateNarrative(facts: {
   fdi: SeriesFacts | null;
   trade: SeriesFacts | null;
@@ -61,6 +70,12 @@ export async function generateNarrative(facts: {
     const parsed = JSON.parse(content);
     if (typeof parsed.summary !== "string" || typeof parsed.yearly !== "string") {
       return { ok: false, error: "OpenAI 응답에 summary/yearly가 없습니다." };
+    }
+    if (hasUnlabeledSpeculation(parsed.summary) || hasUnlabeledSpeculation(parsed.yearly)) {
+      return {
+        ok: false,
+        error: "해설 문장에 추정성 표현이 있는데 \"추정\" 표기가 없습니다. 다시 생성해주세요.",
+      };
     }
     return { ok: true, summary: parsed.summary, yearly: parsed.yearly };
   } catch {
