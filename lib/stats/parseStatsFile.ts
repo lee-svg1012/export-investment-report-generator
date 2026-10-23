@@ -32,6 +32,10 @@ export function findAbnormalValue(value: string | number): string | null {
   return SPECIAL_CHAR_REGEX.test(value) ? `값("${value}")에 특수문자가 포함되어 있습니다` : null;
 }
 
+// "국가" 열은 대륙·권역 합계 행 등에서 원래 비어 있는 게 정상이라, 결측치 검사에서만
+// 예외로 둔다(2026-10-23, 사용자 확인). 값이 들어있을 때는 다른 열과 똑같이 검사한다.
+const BLANK_ALLOWED_COLUMNS = ["국가"];
+
 // 설계(DESIGN.md §2)대로 "형식 확인 → 파싱 → 빈 값 검사" 순서를 하나의 함수로 처리한다.
 // PRD 규칙: 빈 값/형식 오류는 추측으로 채우지 않고 몇 번째 행·열인지 구체적으로 안내한다.
 export async function parseStatsFile(file: File): Promise<ParseResult> {
@@ -139,6 +143,10 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
     for (let c = 0; c < columns.length; c++) {
       const value = dataRow[c] ?? null;
       if (value === null || value === "") {
+        if (BLANK_ALLOWED_COLUMNS.includes(columns[c])) {
+          record[columns[c]] = "";
+          continue;
+        }
         return {
           ok: false,
           error: {
