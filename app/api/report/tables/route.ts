@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { buildReportTables } from "@/lib/stats/buildReportTables";
 import { checkAggregationPeriod } from "@/lib/stats/checkAggregationPeriod";
+import { checkFormatRecognized } from "@/lib/stats/checkFormatRecognized";
 import { parseStatsFile } from "@/lib/stats/parseStatsFile";
 import { computeComparison } from "@/lib/report/computeComparison";
 
@@ -29,7 +30,12 @@ export async function POST(request: NextRequest) {
   }
   const tradeFile = tradeFileRaw instanceof File ? tradeFileRaw : null;
 
-  const tables = await buildReportTables(fdiFile, tradeFile);
+  const rawTables = await buildReportTables(fdiFile, tradeFile);
+  // 예외 규칙: 숫자 값 열을 찾을 수 없으면 양식이 달라진 것으로 보고 조용히 넘어가지 않는다.
+  const tables = {
+    fdi: checkFormatRecognized(rawTables.fdi),
+    trade: rawTables.trade ? checkFormatRecognized(rawTables.trade) : null,
+  };
   const ok = tables.fdi.ok;
   const aggregationPeriodMismatch =
     ok && tables.trade?.ok ? checkAggregationPeriod(tables.fdi, tables.trade) : null;
