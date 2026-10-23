@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 수출·투자 현황 보고서 자동생성 시스템
 
-## Getting Started
+경제부처 국제경제·통상 담당 부서, 무역·투자 지원기관 실무자가 수출입은행 해외투자통계(FDI)와
+산업통상부 수출입 통계 파일을 업로드하면, 표·그래프와 AI 해설 문장이 포함된 보고서 초안을
+자동으로 생성해 비공개 링크로 바로 확인·다운로드할 수 있게 해주는 도구입니다.
 
-First, run the development server:
+자세한 기획 배경과 요구사항은 [PRD.md](PRD.md), 작업 계획은 [PLAN.md](PLAN.md), 설계는
+[DESIGN.md](DESIGN.md)를 참고하세요.
+
+## 핵심 기능
+
+- **통계 파일 업로드 → 표·그래프 자동 생성**: 수출입은행 해외투자통계(필수) + 산업통상부 수출입
+  통계(선택) 파일을 xlsx/csv로 업로드하면 정해진 형식의 표와 그래프(막대/선)를 자동 생성합니다.
+  원본 수치는 임의로 수정·추정·반올림하지 않고 그대로 반영하며, 형식이 맞지 않거나 값이 비어있으면
+  몇 번째 행·열이 문제인지 구체적으로 안내합니다.
+- **보고서 초안 자동 생성**: 업로드된 수치를 근거로 제목·요약·연도별 동향 해설 문장을 AI(OpenAI)로
+  생성합니다. 업로드 파일에 없는 수치·사실은 만들어내지 않으며, 추정성 표현이 섞이면 "추정" 표기
+  없이는 생성 자체를 거부합니다.
+- **전기 대비 증감률 계산**: 비교할 과거 통계 파일을 함께 올리면 행마다 증감률을 계산하고, 매칭되는
+  기간이 없으면 임의로 추정하지 않고 "비교 데이터 없음"으로 표시합니다.
+- **비공개 링크로 열람**: 로그인 없이, 추측하기 어려운 무작위 ID의 전용 링크로만 보고서를 열람할 수
+  있습니다. 생성 후 90일이 지나면 원본 파일과 함께 자동 삭제됩니다.
+- **워드·PDF 내보내기**: 생성된 보고서를 워드(.docx)와 PDF 파일로 바로 내려받을 수 있습니다.
+- **예외 처리**: 엑셀 외 형식, 통계 양식 변경, 두 통계의 집계 기간 불일치, 결측치·음수·특수문자가
+  섞인 값을 조용히 넘기지 않고 사용자에게 구체적으로 안내합니다.
+
+## 기술 스택
+
+- [Next.js](https://nextjs.org) (App Router) — 프론트엔드와 서버 API를 한 프로젝트에서 처리
+- [Supabase](https://supabase.com) — 업로드 원본 파일·생성된 보고서 저장(Storage + DB)
+- [OpenAI API](https://platform.openai.com) — 보고서 해설 문장 생성
+- [Vercel](https://vercel.com) — 배포, Cron Job(만료 보고서 자동 삭제)
+
+## 로컬 개발
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+실행하려면 프로젝트 루트에 아래 키를 담은 `.env` 파일이 필요합니다 (값은 각자 발급받아 채워야
+합니다. 저장소에는 포함돼 있지 않습니다).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+OPENAI_API_KEY=
+SUPABASE_URL=
+SUPABASE_SECRET_KEY=
+CRON_SECRET=
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build    # 프로덕션 빌드
+npm run start    # 프로덕션 서버 실행
+npm run lint     # ESLint 검사
+```
 
-## Learn More
+## 비범위
 
-To learn more about Next.js, take a look at the following resources:
+- 산업통상부·수출입은행 API 실시간 연동 (파일 업로드 방식만 지원)
+- 로그인/회원가입, 다중 사용자 권한 관리
+- 미래 수치 예측·전망 분석
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+자세한 범위·보안 정책은 [PRD.md](PRD.md)를 참고하세요.
