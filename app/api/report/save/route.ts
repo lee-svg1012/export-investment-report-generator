@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { saveReport } from "@/lib/report/saveReport";
 import { MAX_FILE_SIZE_BYTES, formatMaxFileSize } from "@/lib/stats/fileLimits";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { reportPayloadSchema } from "@/lib/report/reportPayloadSchema";
 
 // PLAN.md 13번: 업로드 원본 파일(Storage) + 표·해설(DB)을 묶어 저장하고 비공개 링크용 id를 발급한다.
 const RATE_LIMIT = 20; // IP당 1분에 20회 — Storage 업로드·DB insert 남용 방어
@@ -42,7 +43,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const payload = JSON.parse(payloadRaw);
+  let payloadJson: unknown;
+  try {
+    payloadJson = JSON.parse(payloadRaw);
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "payload가 올바른 JSON 형식이 아닙니다." },
+      { status: 400 },
+    );
+  }
+
+  const parsed = reportPayloadSchema.safeParse(payloadJson);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { ok: false, error: "payload 형식이 올바르지 않습니다." },
+      { status: 400 },
+    );
+  }
+  const payload = parsed.data;
 
   try {
     const id = await saveReport({
@@ -54,7 +72,7 @@ export async function POST(request: NextRequest) {
       summary: payload.summary,
       yearly: payload.yearly,
       aggregationPeriodMismatch: payload.aggregationPeriodMismatch,
-      comparison: payload.comparison ?? null,
+      comparison: payload.comparison,
     });
     return NextResponse.json({ ok: true, id });
   } catch (err) {
