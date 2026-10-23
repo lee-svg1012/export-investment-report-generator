@@ -21,6 +21,12 @@ export type ReportRecord = {
   headline: string;
   summary: string;
   yearly: string;
+  // PRD "국가별 동향": 업로드 파일에 실제 분류 열(국가 등)이 있을 때만 채워진다.
+  byCategory: string;
+  fdiCategoryTable: ParseResult | null;
+  fdiCategoryColumn: string | null;
+  tradeCategoryTable: ParseResult | null;
+  tradeCategoryColumn: string | null;
   aggregationPeriodMismatch: AggregationPeriodMismatchRecord;
   comparison: ComparisonRecord;
 };

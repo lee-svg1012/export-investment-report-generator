@@ -19,6 +19,11 @@ export async function saveReport(input: {
   headline: string;
   summary: string;
   yearly: string;
+  byCategory: string;
+  fdiCategoryTable: ParseResult | null;
+  fdiCategoryColumn: string | null;
+  tradeCategoryTable: ParseResult | null;
+  tradeCategoryColumn: string | null;
   aggregationPeriodMismatch: AggregationPeriodMismatchRecord;
   comparison: ComparisonRecord;
 }): Promise<string> {
@@ -52,6 +57,11 @@ export async function saveReport(input: {
     headline: input.headline,
     summary: input.summary,
     yearly: input.yearly,
+    by_category: input.byCategory,
+    fdi_category_table: input.fdiCategoryTable,
+    fdi_category_column: input.fdiCategoryColumn,
+    trade_category_table: input.tradeCategoryTable,
+    trade_category_column: input.tradeCategoryColumn,
     aggregation_period_mismatch: input.aggregationPeriodMismatch,
     comparison: input.comparison,
   });

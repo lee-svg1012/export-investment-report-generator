@@ -22,7 +22,17 @@ type ReportTablesResponse = {
 };
 
 type NarrativeResponse =
-  | { ok: true; headline: string; summary: string; yearly: string }
+  | {
+      ok: true;
+      headline: string;
+      summary: string;
+      yearly: string;
+      byCategory: string;
+      fdiCategoryTable: ParseResult | null;
+      fdiCategoryColumn: string | null;
+      tradeCategoryTable: ParseResult | null;
+      tradeCategoryColumn: string | null;
+    }
   | { ok: false; error: string };
 
 type SaveResponse = { ok: true; id: string } | { ok: false; error: string };
@@ -138,6 +148,11 @@ export default function Home() {
         headline: narrativeData.headline,
         summary: narrativeData.summary,
         yearly: narrativeData.yearly,
+        byCategory: narrativeData.byCategory,
+        fdiCategoryTable: narrativeData.fdiCategoryTable,
+        fdiCategoryColumn: narrativeData.fdiCategoryColumn,
+        tradeCategoryTable: narrativeData.tradeCategoryTable,
+        tradeCategoryColumn: narrativeData.tradeCategoryColumn,
         aggregationPeriodMismatch: tablesData.aggregationPeriodMismatch,
         comparison: tablesData.comparison,
       }),

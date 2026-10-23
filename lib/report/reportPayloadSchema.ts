@@ -35,6 +35,12 @@ export const reportPayloadSchema = z.object({
   headline: z.string(),
   summary: z.string(),
   yearly: z.string(),
+  // PRD "국가별 동향": 업로드 파일에 실제 분류 열(국가 등)이 있을 때만 채워진다.
+  byCategory: z.string(),
+  fdiCategoryTable: parseResultSchema.nullable(),
+  fdiCategoryColumn: z.string().nullable(),
+  tradeCategoryTable: parseResultSchema.nullable(),
+  tradeCategoryColumn: z.string().nullable(),
   aggregationPeriodMismatch: z
     .object({
       message: z.string(),

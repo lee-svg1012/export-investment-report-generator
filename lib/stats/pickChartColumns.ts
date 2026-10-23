@@ -1,4 +1,5 @@
 import { ParsedRow, ParseResult } from "./parseStatsFile";
+import { TOTAL_ROW_LABELS } from "./totalRowLabels";
 
 const LABEL_COLUMN_CANDIDATES = ["연도", "연월", "기간", "월"];
 
@@ -33,4 +34,24 @@ export function pickChartColumns(table: ParseResult): ChartColumns {
 
   if (!labelColumn || !valueColumn) return null;
   return { labelColumn, valueColumn };
+}
+
+// PRD 8개 항목 중 "국가별 동향"처럼, 업로드 파일에 연도·금액 말고 실제 분류 열(국가·업종 등)이
+// 있으면 그 열을 찾는다(2026-10-24, 실제 파일에 "국가" 열이 있는 것을 확인해 추가). 열 이름을
+// 미리 정하지 않고, 라벨·숫자 열이 아니면서 "합계"류가 아닌 실제 값이 하나라도 있는 열을 쓴다 —
+// 없으면 null을 반환해 그 항목 자체를 생략한다(지어내지 않는다).
+export function pickBreakdownColumn(table: ParseResult): string | null {
+  if (!table.ok) return null;
+  const chart = pickChartColumns(table);
+  if (!chart) return null;
+
+  return (
+    table.columns.find((column) => {
+      if (column === chart.labelColumn || isNumericColumn(table.rows, column)) return false;
+      return table.rows.some((row) => {
+        const value = String(row[column] ?? "").trim();
+        return value !== "" && !TOTAL_ROW_LABELS.includes(value);
+      });
+    }) ?? null
+  );
 }

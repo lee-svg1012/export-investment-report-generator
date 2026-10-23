@@ -1,7 +1,19 @@
 import type { SeriesFacts } from "./computeSeriesFacts";
+import type { CategoryFact } from "./computeCategoryBreakdown";
+
+export type NarrativeFacts = {
+  fdi: SeriesFacts | null;
+  trade: SeriesFacts | null;
+  // PRD "국가별 동향": 업로드 파일에 실제 분류 열(국가 등)이 있을 때만 채워진다 — 없으면
+  // undefined/null로 두고, AI에게도 그 사실을 그대로 전달해 지어내지 않게 한다.
+  fdiCategoryColumn?: string | null;
+  fdiCategories?: CategoryFact[] | null;
+  tradeCategoryColumn?: string | null;
+  tradeCategories?: CategoryFact[] | null;
+};
 
 export type NarrativeResult =
-  | { ok: true; summary: string; yearly: string }
+  | { ok: true; summary: string; yearly: string; byCategory: string }
   | { ok: false; error: string };
 
 // 보안 점검(SEC-2) 대응: <data> 안의 내용은 지시가 아니라 데이터일 뿐이라고 명시하고,
@@ -16,9 +28,13 @@ const SYSTEM_PROMPT = `너는 정부 보고서의 통계 해설 문장을 쓰는
    아니므로 "증가할 것으로 예상된다/전망된다" 같은 미래형·추측형 표현을 쓰지 말고, "증가했다/
    증가한 것으로 나타났다"처럼 이미 일어난 사실로 서술하라. 데이터에 없는 미래 시점을 추정할
    때만 "추정"이라고 표기하라.
-5. 반드시 아래 JSON 형식으로만 답하라: {"summary": "...", "yearly": "..."}
+5. 반드시 아래 JSON 형식으로만 답하라: {"summary": "...", "yearly": "...", "byCategory": "..."}
    - summary: 업로드된 통계(하나 또는 둘)의 최신 수치를 요약하는 2~3문장
-   - yearly: 기간별 추이를 요약하는 2~3문장`;
+   - yearly: 기간별 추이를 요약하는 2~3문장
+   - byCategory: <data>에 fdiCategories 또는 tradeCategories가 있으면, 그 분류 열(fdiCategoryColumn/
+     tradeCategoryColumn) 기준으로 분류별 최신 수치·증감을 2~3문장으로 서술하라. 분류가 하나뿐이면
+     그 하나만 담백하게 서술하면 된다. fdiCategories와 tradeCategories가 둘 다 없거나 빈 배열이면
+     byCategory는 반드시 빈 문자열 ""로 남겨라 — 분류 데이터가 없는데 지어내지 마라.`;
 
 // PRD 5장 규칙: "추정치 언급 시 반드시 '추정'임을 표기." 시스템 프롬프트로 지시만 하고 끝내지 않고,
 // 실제 응답에 추정성 표현이 섞였는데 "추정" 표기가 빠졌으면 서버에서 거부한다(검증 후 거부 방식).
@@ -33,7 +49,7 @@ function hasUnlabeledSpeculation(text: string): boolean {
 
 async function requestNarrative(
   apiKey: string,
-  facts: { fdi: SeriesFacts | null; trade: SeriesFacts | null },
+  facts: NarrativeFacts,
 ): Promise<NarrativeResult> {
   let response: Response;
   try {
@@ -69,16 +85,24 @@ async function requestNarrative(
 
   try {
     const parsed = JSON.parse(content);
-    if (typeof parsed.summary !== "string" || typeof parsed.yearly !== "string") {
-      return { ok: false, error: "OpenAI 응답에 summary/yearly가 없습니다." };
+    if (
+      typeof parsed.summary !== "string" ||
+      typeof parsed.yearly !== "string" ||
+      typeof parsed.byCategory !== "string"
+    ) {
+      return { ok: false, error: "OpenAI 응답에 summary/yearly/byCategory가 없습니다." };
     }
-    if (hasUnlabeledSpeculation(parsed.summary) || hasUnlabeledSpeculation(parsed.yearly)) {
+    if (
+      hasUnlabeledSpeculation(parsed.summary) ||
+      hasUnlabeledSpeculation(parsed.yearly) ||
+      hasUnlabeledSpeculation(parsed.byCategory)
+    ) {
       return {
         ok: false,
         error: "해설 문장에 추정성 표현이 있는데 \"추정\" 표기가 없습니다. 다시 생성해주세요.",
       };
     }
-    return { ok: true, summary: parsed.summary, yearly: parsed.yearly };
+    return { ok: true, summary: parsed.summary, yearly: parsed.yearly, byCategory: parsed.byCategory };
   } catch {
     return { ok: false, error: "OpenAI 응답을 JSON으로 해석할 수 없습니다." };
   }
@@ -88,10 +112,7 @@ async function requestNarrative(
 // 업로드부터 다시 하지 않도록 서버에서 최대 2번까지 자동으로 다시 생성해본다(2026-10-23).
 const MAX_SPECULATION_RETRIES = 2;
 
-export async function generateNarrative(facts: {
-  fdi: SeriesFacts | null;
-  trade: SeriesFacts | null;
-}): Promise<NarrativeResult> {
+export async function generateNarrative(facts: NarrativeFacts): Promise<NarrativeResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return { ok: false, error: "OPENAI_API_KEY가 설정되어 있지 않습니다." };

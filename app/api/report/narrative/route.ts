@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { ParseResult } from "@/lib/stats/parseStatsFile";
 import { computeSeriesFacts } from "@/lib/report/computeSeriesFacts";
+import { computeCategoryBreakdown } from "@/lib/report/computeCategoryBreakdown";
 import { buildHeadline } from "@/lib/report/buildHeadline";
 import { generateNarrative } from "@/lib/report/generateNarrative";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
-// PLAN.md 11번: 8개 항목 중 1(제목)·2(요약)·3(연도별 동향)만 다룬다.
-// 4~6번(업종별·지역별·국가별)은 업로드 데이터에 구분 열이 있는지 알 수 없어 생략하고,
+// PLAN.md 11번: 8개 항목 중 1(제목)·2(요약)·3(연도별 동향)을 다루고, 업로드 파일에 국가·업종
+// 같은 실제 분류 열이 있으면 6(국가별 동향)도 그 열로 자동 생성한다(2026-10-24 추가 — 실제
+// 파일에 "국가" 열이 있는 것을 확인). 4·5(업종별·지역별)는 그런 열이 없으면 여전히 생략하고,
 // 7~8번(종합평가·정부입장)은 통계만으로 지어낼 수 없는 내용이라 AI로 생성하지 않는다.
 // 클라이언트는 /api/report/tables로 먼저 집계기간 등을 확인·승인받은 뒤에만 이 라우트를 부른다.
 const RATE_LIMIT = 10; // IP당 1분에 10회 — OpenAI 호출 과금 방어
@@ -52,7 +54,17 @@ export async function POST(request: NextRequest) {
   const tradeFacts = trade?.ok ? computeSeriesFacts("국내투자 현황", trade) : null;
   const headline = buildHeadline(fdiFacts, tradeFacts);
 
-  const narrative = await generateNarrative({ fdi: fdiFacts, trade: tradeFacts });
+  const fdiCategoryBreakdown = computeCategoryBreakdown(fdi);
+  const tradeCategoryBreakdown = trade?.ok ? computeCategoryBreakdown(trade) : null;
+
+  const narrative = await generateNarrative({
+    fdi: fdiFacts,
+    trade: tradeFacts,
+    fdiCategoryColumn: fdiCategoryBreakdown?.categoryColumn ?? null,
+    fdiCategories: fdiCategoryBreakdown?.categories ?? null,
+    tradeCategoryColumn: tradeCategoryBreakdown?.categoryColumn ?? null,
+    tradeCategories: tradeCategoryBreakdown?.categories ?? null,
+  });
   if (!narrative.ok) {
     return NextResponse.json({ ok: false, error: narrative.error }, { status: 502 });
   }
@@ -62,5 +74,10 @@ export async function POST(request: NextRequest) {
     headline,
     summary: narrative.summary,
     yearly: narrative.yearly,
+    byCategory: narrative.byCategory,
+    fdiCategoryTable: fdiCategoryBreakdown?.table ?? null,
+    fdiCategoryColumn: fdiCategoryBreakdown?.categoryColumn ?? null,
+    tradeCategoryTable: tradeCategoryBreakdown?.table ?? null,
+    tradeCategoryColumn: tradeCategoryBreakdown?.categoryColumn ?? null,
   });
 }

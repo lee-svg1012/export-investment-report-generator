@@ -11,6 +11,7 @@ const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 11 },
   h1: { fontSize: 16, fontWeight: 700, marginBottom: 8 },
   h2: { fontSize: 13, fontWeight: 700, marginTop: 16, marginBottom: 6 },
+  h3: { fontSize: 12, fontWeight: 700, marginTop: 10, marginBottom: 4 },
   p: { marginBottom: 6, lineHeight: 1.4 },
   table: { display: "flex", width: "auto", marginBottom: 6 },
   row: { flexDirection: "row" },
@@ -83,8 +84,32 @@ function ReportPdfDocument({ report }: { report: ReportRecord }) {
           </Text>
         )}
 
+        {(report.fdiCategoryTable || report.tradeCategoryTable) && (
+          <>
+            <Text style={styles.h2}>
+              {report.fdiCategoryColumn ?? report.tradeCategoryColumn}별 동향
+            </Text>
+            <Text style={styles.p}>{report.byCategory}</Text>
+            {report.fdiCategoryTable && (
+              <>
+                <Text style={styles.h3}>해외직접투자(FDI) — {report.fdiCategoryColumn}별</Text>
+                <StatsTablePdf table={report.fdiCategoryTable} />
+              </>
+            )}
+            {report.tradeCategoryTable && (
+              <>
+                <Text style={styles.h3}>국내투자 — {report.tradeCategoryColumn}별</Text>
+                <StatsTablePdf table={report.tradeCategoryTable} />
+              </>
+            )}
+          </>
+        )}
+
         <Text style={styles.p}>
-          업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
+          업종별·지역별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
+          {!report.fdiCategoryTable && !report.tradeCategoryTable
+            ? " 국가별 동향도 같은 이유로 생략되었습니다."
+            : ""}{" "}
           종합 평가·전망, 정부 입장 및 담당 부서는 통계만으로 자동 생성할 수 없는 항목이라
           직접 작성이 필요합니다.
         </Text>

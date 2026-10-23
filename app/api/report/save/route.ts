@@ -69,6 +69,11 @@ export async function POST(request: NextRequest) {
       headline: payload.headline,
       summary: payload.summary,
       yearly: payload.yearly,
+      byCategory: payload.byCategory,
+      fdiCategoryTable: payload.fdiCategoryTable,
+      fdiCategoryColumn: payload.fdiCategoryColumn,
+      tradeCategoryTable: payload.tradeCategoryTable,
+      tradeCategoryColumn: payload.tradeCategoryColumn,
       aggregationPeriodMismatch: payload.aggregationPeriodMismatch,
       comparison: payload.comparison,
     });

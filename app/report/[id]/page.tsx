@@ -68,8 +68,32 @@ async function ReportContent({ id }: { id: string }) {
           </div>
         )}
 
+        {(report.fdiCategoryTable || report.tradeCategoryTable) && (
+          <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+            <h2 className="text-lg font-semibold text-white">
+              {report.fdiCategoryColumn ?? report.tradeCategoryColumn}별 동향
+            </h2>
+            <p className="text-sm text-zinc-300">{report.byCategory}</p>
+          </section>
+        )}
+        {report.fdiCategoryTable && (
+          <ReportResultSection
+            title={`해외직접투자(FDI) — ${report.fdiCategoryColumn}별 동향`}
+            table={report.fdiCategoryTable}
+          />
+        )}
+        {report.tradeCategoryTable && (
+          <ReportResultSection
+            title={`국내투자 — ${report.tradeCategoryColumn}별 동향`}
+            table={report.tradeCategoryTable}
+          />
+        )}
+
         <section className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4 text-sm text-zinc-400">
-          업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
+          업종별·지역별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
+          {!report.fdiCategoryTable && !report.tradeCategoryTable
+            ? " 국가별 동향도 같은 이유로 생략되었습니다."
+            : ""}{" "}
           종합 평가·전망, 정부 입장 및 담당 부서는 통계만으로 자동 생성할 수 없는 항목이라
           직접 작성이 필요합니다.
         </section>
