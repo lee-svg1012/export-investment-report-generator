@@ -20,15 +20,15 @@ function getExtension(filename: string): string {
   return index === -1 ? "" : filename.slice(index).toLowerCase();
 }
 
-// PRD 5장 예외 처리 규칙: "결측치(빈 칸)·음수·특수문자가 섞여 있는 경우 0이나 평균 등으로
+// PRD 5장 예외 처리 규칙: "결측치(빈 칸)·특수문자가 섞여 있는 경우 0이나 평균 등으로
 // 임의로 채우지 않고 행·열을 짚어 안내한다." 날짜·구분 등 글자 값에 쓰이는 한글·영문·숫자·
 // 공백·일반 구두점(-, _, (, ), /, ., ,)은 허용하고, 그 외 기호만 "특수문자"로 본다.
+// 음수는 더 이상 이상값으로 보지 않는다(2026-10-23 확정) — 순투자 감소, 전년 대비 감소처럼
+// 수출입·투자 통계에서 음수는 정상적으로 나오는 값이라 막으면 안 됨.
 const SPECIAL_CHAR_REGEX = /[^\p{L}\p{N}\s\-_().,/]/u;
 
 export function findAbnormalValue(value: string | number): string | null {
-  if (typeof value === "number") {
-    return value < 0 ? `값(${value})이 음수입니다` : null;
-  }
+  if (typeof value === "number") return null;
   return SPECIAL_CHAR_REGEX.test(value) ? `값("${value}")에 특수문자가 포함되어 있습니다` : null;
 }
 
