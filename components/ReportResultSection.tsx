@@ -17,8 +17,8 @@ export function ReportResultSection({
   const chartColumns = pickChartColumns(table);
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <h2 className="font-medium text-black dark:text-zinc-50">{title}</h2>
+    <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+      <h2 className="font-medium text-white">{title}</h2>
       <StatsTable table={table} comparison={comparison} />
       {chartColumns && (
         <StatsChart

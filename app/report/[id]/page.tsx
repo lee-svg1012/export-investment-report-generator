@@ -13,45 +13,42 @@ async function ReportContent({ id }: { id: string }) {
 
   if (!report) {
     return (
-      <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+      <div className="flex flex-col flex-1 items-center bg-background font-sans">
         <main className="flex w-full max-w-3xl flex-col gap-4 px-6 py-16 sm:px-16">
-          <h1 className="text-2xl font-bold text-black dark:text-zinc-50">
-            보고서를 찾을 수 없습니다
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            링크가 올바른지 확인해주세요.
-          </p>
+          <h1 className="text-2xl font-bold text-white">보고서를 찾을 수 없습니다</h1>
+          <p className="text-sm text-zinc-400">링크가 올바른지 확인해주세요.</p>
         </main>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="relative flex flex-1 flex-col items-center overflow-hidden bg-background font-sans">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[480px] bg-[radial-gradient(ellipse_at_top,_rgba(34,197,94,0.14),_transparent_65%)]"
+      />
       <main className="flex w-full max-w-3xl flex-col gap-8 px-6 py-16 sm:px-16">
         <header className="flex flex-col gap-1">
-          <h1 className="text-3xl font-bold tracking-tight text-black dark:text-zinc-50">
+          <span className="text-xs font-medium tracking-wide text-accent uppercase">
             보고서 초안
-          </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            보고서 ID: {report.id}
-          </p>
+          </span>
+          <h1 className="text-3xl font-bold tracking-tight text-white">보고서 초안</h1>
+          <p className="text-sm text-zinc-500">보고서 ID: {report.id}</p>
         </header>
 
         {report.aggregationPeriodMismatch && (
-          <div className="rounded-lg border border-dashed border-amber-400 p-4 text-sm text-amber-700 dark:border-amber-600 dark:text-amber-400">
+          <div className="rounded-2xl border border-dashed border-amber-500/40 bg-amber-500/5 p-4 text-sm text-amber-400">
             {report.aggregationPeriodMismatch.message} (FDI:{" "}
             {report.aggregationPeriodMismatch.fdiPeriods.join(", ")} / 국내투자:{" "}
             {report.aggregationPeriodMismatch.tradePeriods.join(", ")})
           </div>
         )}
 
-        <section className="flex flex-col gap-4 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-          <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-            {report.headline}
-          </h2>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">{report.summary}</p>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">{report.yearly}</p>
+        <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+          <h2 className="text-lg font-semibold text-white">{report.headline}</h2>
+          <p className="text-sm text-zinc-300">{report.summary}</p>
+          <p className="text-sm text-zinc-300">{report.yearly}</p>
         </section>
 
         <ReportResultSection
@@ -66,12 +63,12 @@ async function ReportContent({ id }: { id: string }) {
             comparison={report.comparison?.trade}
           />
         ) : (
-          <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+          <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4 text-sm text-zinc-400">
             산업통상부 수출입 통계 파일이 첨부되지 않아 국내투자 현황 항목은 생략되었습니다.
           </div>
         )}
 
-        <section className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        <section className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4 text-sm text-zinc-400">
           업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.
           종합 평가·전망, 정부 입장 및 담당 부서는 통계만으로 자동 생성할 수 없는 항목이라
           직접 작성이 필요합니다.
@@ -80,13 +77,13 @@ async function ReportContent({ id }: { id: string }) {
         <div className="flex gap-4">
           <a
             href={`/api/report/${report.id}/word`}
-            className="flex h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 px-5 text-center dark:border-zinc-700"
+            className="flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-white/30 hover:bg-white/5"
           >
             워드로 내보내기
           </a>
           <a
             href={`/api/report/${report.id}/pdf`}
-            className="flex h-12 flex-1 items-center justify-center rounded-full border border-zinc-300 px-5 text-center dark:border-zinc-700"
+            className="flex h-12 flex-1 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-white/30 hover:bg-white/5"
           >
             PDF로 내보내기
           </a>
@@ -101,7 +98,11 @@ export default function ReportPage({
 }: PageProps<"/report/[id]">) {
   return (
     <Suspense
-      fallback={<div className="p-16 text-center">보고서를 불러오는 중...</div>}
+      fallback={
+        <div className="flex flex-1 items-center justify-center bg-background p-16 text-center text-zinc-400">
+          보고서를 불러오는 중...
+        </div>
+      }
     >
       {params.then(({ id }) => (
         <ReportContent id={id} />

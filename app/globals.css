@@ -1,22 +1,19 @@
 @import "tailwindcss";
 
+/* 핀테크 대시보드 느낌(다크 테마 + 글래스모피즘 + 초록 포인트 컬러)으로 고정한 테마.
+   OS 설정과 무관하게 항상 이 톤을 유지한다. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0a0a0a;
+  --foreground: #f4f4f5;
+  --accent: #22c55e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

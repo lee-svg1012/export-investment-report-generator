@@ -43,12 +43,10 @@ function UploadCard({
   onFileChange: (file: File | null) => void;
 }) {
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
-      <span className="font-medium text-black dark:text-zinc-50">{title}</span>
-      <span className="text-sm text-zinc-500 dark:text-zinc-400">
-        {description}
-      </span>
-      <label className="mt-2 inline-flex w-fit cursor-pointer items-center rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background">
+    <div className="flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition-colors hover:border-white/20">
+      <span className="font-medium text-white">{title}</span>
+      <span className="text-sm text-zinc-400">{description}</span>
+      <label className="mt-2 inline-flex w-fit cursor-pointer items-center rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-90">
         파일 선택
         <input
           type="file"
@@ -57,7 +55,7 @@ function UploadCard({
           onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
         />
       </label>
-      <span className="text-sm text-zinc-600 dark:text-zinc-300">
+      <span className={file ? "text-sm text-accent" : "text-sm text-zinc-500"}>
         {formatFileLabel(file)}
       </span>
     </div>
@@ -161,11 +159,20 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col flex-1 items-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="relative flex flex-1 flex-col items-center overflow-hidden bg-background font-sans">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[480px] bg-[radial-gradient(ellipse_at_top,_rgba(34,197,94,0.16),_transparent_65%)]"
+      />
       <main className="flex w-full max-w-3xl flex-col gap-10 px-6 py-16 sm:px-16">
-        <h1 className="text-4xl font-bold tracking-tight text-black dark:text-zinc-50">
-          수출·투자 현황 보고서 자동생성 시스템
-        </h1>
+        <div className="flex flex-col gap-2">
+          <span className="text-xs font-medium tracking-wide text-accent uppercase">
+            AI Report Assistant
+          </span>
+          <h1 className="text-4xl font-bold tracking-tight text-white">
+            수출·투자 현황 보고서 자동생성 시스템
+          </h1>
+        </div>
 
         <section className="grid gap-6 sm:grid-cols-2">
           <UploadCard
@@ -189,7 +196,7 @@ export default function Home() {
           onFileChange={setCompareFile}
         />
 
-        <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+        <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-4 text-sm text-zinc-400">
           {generationError ?? "파일 업로드 후 형식·내용에 문제가 있으면 여기에 구체적으로 표시됩니다."}
         </div>
 
@@ -197,7 +204,7 @@ export default function Home() {
           type="button"
           disabled={!canGenerate}
           onClick={handleGenerate}
-          className="h-12 w-full rounded-full bg-foreground px-5 text-background disabled:opacity-40 md:w-[200px]"
+          className="h-12 w-full rounded-full bg-foreground px-5 text-background shadow-[0_0_0_0_rgba(34,197,94,0)] transition-all enabled:hover:opacity-90 enabled:hover:shadow-[0_0_30px_-6px_rgba(34,197,94,0.6)] disabled:opacity-30 md:w-[200px]"
         >
           {isGenerating ? "생성 중..." : "보고서 생성"}
         </button>

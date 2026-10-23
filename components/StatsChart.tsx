@@ -26,7 +26,7 @@ export function StatsChart({
           className={
             chartType === "bar"
               ? "rounded-full bg-foreground px-3 py-1 text-background"
-              : "rounded-full border border-zinc-300 px-3 py-1 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+              : "rounded-full border border-white/15 px-3 py-1 text-zinc-300 transition-colors hover:border-white/30"
           }
         >
           막대그래프
@@ -37,7 +37,7 @@ export function StatsChart({
           className={
             chartType === "line"
               ? "rounded-full bg-foreground px-3 py-1 text-background"
-              : "rounded-full border border-zinc-300 px-3 py-1 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300"
+              : "rounded-full border border-white/15 px-3 py-1 text-zinc-300 transition-colors hover:border-white/30"
           }
         >
           선그래프
