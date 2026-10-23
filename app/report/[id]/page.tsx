@@ -1,6 +1,12 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { getReport } from "@/lib/report/getReport";
 import { ReportResultSection } from "@/components/ReportResultSection";
+
+// 비공개 링크로만 접근하는 보고서이므로 검색엔진에 노출되지 않도록 한다.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 async function ReportContent({ id }: { id: string }) {
   const report = await getReport(id);
