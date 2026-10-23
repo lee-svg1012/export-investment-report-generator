@@ -20,23 +20,21 @@ export async function POST(request: NextRequest) {
 
   const formData = await request.formData();
   const fdiFile = formData.get("fdiFile");
-  const tradeFile = formData.get("tradeFile");
+  const tradeFileRaw = formData.get("tradeFile");
   const payloadRaw = formData.get("payload");
 
-  if (
-    !(fdiFile instanceof File) ||
-    !(tradeFile instanceof File) ||
-    typeof payloadRaw !== "string"
-  ) {
+  if (!(fdiFile instanceof File) || typeof payloadRaw !== "string") {
     return NextResponse.json(
       { ok: false, error: "저장에 필요한 데이터가 부족합니다." },
       { status: 400 },
     );
   }
+  // 산업통상부 자료는 선택 업로드이므로 없을 수 있다.
+  const tradeFile = tradeFileRaw instanceof File ? tradeFileRaw : null;
 
   // /api/report/tables를 거치지 않고 이 엔드포인트를 직접 호출하는 경우를 대비해
   // 저장(Storage 업로드) 직전에도 용량 상한을 독립적으로 재검사한다.
-  if (fdiFile.size > MAX_FILE_SIZE_BYTES || tradeFile.size > MAX_FILE_SIZE_BYTES) {
+  if (fdiFile.size > MAX_FILE_SIZE_BYTES || (tradeFile && tradeFile.size > MAX_FILE_SIZE_BYTES)) {
     return NextResponse.json(
       { ok: false, error: `파일 용량이 너무 큽니다 (${formatMaxFileSize()} 이하만 업로드할 수 있습니다).` },
       { status: 400 },

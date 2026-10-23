@@ -28,17 +28,18 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json();
   const fdi: ParseResult | undefined = body?.fdi;
-  const trade: ParseResult | undefined = body?.trade;
+  const trade: ParseResult | null | undefined = body?.trade;
 
-  if (!fdi?.ok || !trade?.ok) {
+  if (!fdi?.ok) {
     return NextResponse.json(
-      { ok: false, error: "파싱이 완료된 표 데이터가 필요합니다." },
+      { ok: false, error: "파싱이 완료된 FDI 표 데이터가 필요합니다." },
       { status: 400 },
     );
   }
 
   const fdiFacts = computeSeriesFacts("해외직접투자(FDI) 현황", fdi);
-  const tradeFacts = computeSeriesFacts("국내투자 현황", trade);
+  // 산업통상부 자료(trade)는 선택이라 없을 수 있다 — 그 경우 FDI 수치만으로 해설을 생성한다.
+  const tradeFacts = trade?.ok ? computeSeriesFacts("국내투자 현황", trade) : null;
   const headline = buildHeadline(fdiFacts, tradeFacts);
 
   const narrative = await generateNarrative({ fdi: fdiFacts, trade: tradeFacts });

@@ -57,9 +57,17 @@ export async function exportWord(report: ReportRecord): Promise<Buffer> {
           ...buildStatsTable(report.fdiTable),
           new Paragraph(formatComparisonLine(report.comparison?.fdi)),
 
-          new Paragraph({ text: "국내투자 현황", heading: HeadingLevel.HEADING_2 }),
-          ...buildStatsTable(report.tradeTable),
-          new Paragraph(formatComparisonLine(report.comparison?.trade)),
+          ...(report.tradeTable
+            ? [
+                new Paragraph({ text: "국내투자 현황", heading: HeadingLevel.HEADING_2 }),
+                ...buildStatsTable(report.tradeTable),
+                new Paragraph(formatComparisonLine(report.comparison?.trade)),
+              ]
+            : [
+                new Paragraph({
+                  text: "산업통상부 수출입 통계 파일이 첨부되지 않아 국내투자 현황 항목은 생략되었습니다.",
+                }),
+              ]),
 
           new Paragraph({
             text:

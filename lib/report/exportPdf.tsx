@@ -55,9 +55,17 @@ function ReportPdfDocument({ report }: { report: ReportRecord }) {
         <StatsTablePdf table={report.fdiTable} />
         <Text style={styles.p}>{formatComparisonLine(report.comparison?.fdi)}</Text>
 
-        <Text style={styles.h2}>국내투자 현황</Text>
-        <StatsTablePdf table={report.tradeTable} />
-        <Text style={styles.p}>{formatComparisonLine(report.comparison?.trade)}</Text>
+        {report.tradeTable ? (
+          <>
+            <Text style={styles.h2}>국내투자 현황</Text>
+            <StatsTablePdf table={report.tradeTable} />
+            <Text style={styles.p}>{formatComparisonLine(report.comparison?.trade)}</Text>
+          </>
+        ) : (
+          <Text style={styles.p}>
+            산업통상부 수출입 통계 파일이 첨부되지 않아 국내투자 현황 항목은 생략되었습니다.
+          </Text>
+        )}
 
         <Text style={styles.p}>
           업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.

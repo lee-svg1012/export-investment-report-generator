@@ -59,11 +59,17 @@ async function ReportContent({ id }: { id: string }) {
           table={report.fdiTable}
           comparison={report.comparison?.fdi}
         />
-        <ReportResultSection
-          title="국내투자 현황"
-          table={report.tradeTable}
-          comparison={report.comparison?.trade}
-        />
+        {report.tradeTable ? (
+          <ReportResultSection
+            title="국내투자 현황"
+            table={report.tradeTable}
+            comparison={report.comparison?.trade}
+          />
+        ) : (
+          <div className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+            산업통상부 수출입 통계 파일이 첨부되지 않아 국내투자 현황 항목은 생략되었습니다.
+          </div>
+        )}
 
         <section className="rounded-lg border border-dashed border-zinc-300 p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
           업종별·지역별·국가별 동향은 업로드 데이터에서 해당 구분을 알 수 없어 생략되었습니다.

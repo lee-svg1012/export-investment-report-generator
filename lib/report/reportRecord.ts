@@ -15,7 +15,8 @@ export type ComparisonRecord = {
 export type ReportRecord = {
   id: string;
   fdiTable: ParseResult;
-  tradeTable: ParseResult;
+  // 산업통상부 자료는 선택 업로드라 없으면 null (PRD 4장 "주 사용 패턴" 참고)
+  tradeTable: ParseResult | null;
   headline: string;
   summary: string;
   yearly: string;

@@ -5,9 +5,9 @@ import type { AggregationPeriodMismatchRecord, ComparisonRecord } from "./report
 
 export async function saveReport(input: {
   fdiFile: File;
-  tradeFile: File;
+  tradeFile: File | null;
   fdiTable: ParseResult;
-  tradeTable: ParseResult;
+  tradeTable: ParseResult | null;
   headline: string;
   summary: string;
   yearly: string;
@@ -18,18 +18,23 @@ export async function saveReport(input: {
   // nanoid 기본 생성기·기본 길이(21자) 그대로 사용 — 추측 불가능한 비공개 링크 ID (보안 점검 SEC-1).
   const id = nanoid();
 
-  const [fdiUpload, tradeUpload] = await Promise.all([
+  // tradeFile은 선택 업로드이므로 있을 때만 Storage에 올린다.
+  const uploads = [
     supabase.storage
       .from("report-files")
       .upload(`${id}/fdi-${input.fdiFile.name}`, input.fdiFile),
-    supabase.storage
-      .from("report-files")
-      .upload(`${id}/trade-${input.tradeFile.name}`, input.tradeFile),
-  ]);
-  if (fdiUpload.error || tradeUpload.error) {
-    throw new Error(
-      `원본 파일 저장 실패: ${fdiUpload.error?.message ?? tradeUpload.error?.message}`,
-    );
+    ...(input.tradeFile
+      ? [
+          supabase.storage
+            .from("report-files")
+            .upload(`${id}/trade-${input.tradeFile.name}`, input.tradeFile),
+        ]
+      : []),
+  ];
+  const uploadResults = await Promise.all(uploads);
+  const failedUpload = uploadResults.find((result) => result.error);
+  if (failedUpload) {
+    throw new Error(`원본 파일 저장 실패: ${failedUpload.error?.message}`);
   }
 
   const { error } = await supabase.from("reports").insert({

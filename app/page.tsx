@@ -17,7 +17,7 @@ type ComparisonResult =
 type ReportTablesResponse = {
   ok: boolean;
   fdi: ParseResult;
-  trade: ParseResult;
+  trade: ParseResult | null;
   aggregationPeriodMismatch: AggregationPeriodMismatch;
   comparison: { fdi: ComparisonResult; trade: ComparisonResult } | null;
 };
@@ -75,17 +75,19 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
 
-  const canGenerate = tradeFile !== null && fdiFile !== null && !isGenerating;
+  // 수출입은행 해외투자통계(FDI)는 필수, 산업통상부 수출입 통계는 선택이다 —
+  // FDI는 분기마다 쓰는 주력 보고서지만 산업통상부 자료는 작성 주기가 더 길어 매번 있는 게 아니다.
+  const canGenerate = fdiFile !== null && !isGenerating;
 
   async function handleGenerate() {
-    if (!tradeFile || !fdiFile) return;
+    if (!fdiFile) return;
 
     setIsGenerating(true);
     setGenerationError(null);
 
     const tablesFormData = new FormData();
     tablesFormData.append("fdiFile", fdiFile);
-    tablesFormData.append("tradeFile", tradeFile);
+    if (tradeFile) tablesFormData.append("tradeFile", tradeFile);
     if (compareFile) tablesFormData.append("compareFile", compareFile);
 
     const tablesResponse = await fetch("/api/report/tables", {
@@ -97,7 +99,7 @@ export default function Home() {
     if (!tablesData.ok) {
       const message =
         (!tablesData.fdi.ok && tablesData.fdi.error.message) ||
-        (!tablesData.trade.ok && tablesData.trade.error.message) ||
+        (tablesData.trade && !tablesData.trade.ok && tablesData.trade.error.message) ||
         "알 수 없는 오류가 발생했습니다.";
       setGenerationError(message);
       setIsGenerating(false);
@@ -130,7 +132,7 @@ export default function Home() {
 
     const saveFormData = new FormData();
     saveFormData.append("fdiFile", fdiFile);
-    saveFormData.append("tradeFile", tradeFile);
+    if (tradeFile) saveFormData.append("tradeFile", tradeFile);
     saveFormData.append(
       "payload",
       JSON.stringify({
@@ -168,16 +170,16 @@ export default function Home() {
 
         <section className="grid gap-6 sm:grid-cols-2">
           <UploadCard
-            title="산업통상부 수출입 통계"
-            description="국내투자 현황 통계 파일 (xlsx/csv)"
-            file={tradeFile}
-            onFileChange={setTradeFile}
-          />
-          <UploadCard
-            title="수출입은행 해외투자통계"
+            title="수출입은행 해외투자통계 (필수)"
             description="해외직접투자(FDI) 현황 통계 파일 (xlsx/csv)"
             file={fdiFile}
             onFileChange={setFdiFile}
+          />
+          <UploadCard
+            title="산업통상부 수출입 통계 (선택)"
+            description="국내투자 현황 통계 파일 (xlsx/csv) — 작성 주기가 길어 없을 수 있음"
+            file={tradeFile}
+            onFileChange={setTradeFile}
           />
         </section>
 

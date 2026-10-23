@@ -33,7 +33,8 @@ const comparisonResultSchema = z.union([
 
 export const reportPayloadSchema = z.object({
   fdiTable: parseResultSchema,
-  tradeTable: parseResultSchema,
+  // 산업통상부 자료는 선택 업로드라 없으면 null.
+  tradeTable: parseResultSchema.nullable(),
   headline: z.string(),
   summary: z.string(),
   yearly: z.string(),
