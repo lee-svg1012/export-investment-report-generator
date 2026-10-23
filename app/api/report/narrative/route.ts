@@ -3,12 +3,29 @@ import type { ParseResult } from "@/lib/stats/parseStatsFile";
 import { computeSeriesFacts } from "@/lib/report/computeSeriesFacts";
 import { buildHeadline } from "@/lib/report/buildHeadline";
 import { generateNarrative } from "@/lib/report/generateNarrative";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 // PLAN.md 11번: 8개 항목 중 1(제목)·2(요약)·3(연도별 동향)만 다룬다.
 // 4~6번(업종별·지역별·국가별)은 업로드 데이터에 구분 열이 있는지 알 수 없어 생략하고,
 // 7~8번(종합평가·정부입장)은 통계만으로 지어낼 수 없는 내용이라 AI로 생성하지 않는다.
 // 클라이언트는 /api/report/tables로 먼저 집계기간 등을 확인·승인받은 뒤에만 이 라우트를 부른다.
+const RATE_LIMIT = 10; // IP당 1분에 10회 — OpenAI 호출 과금 방어
+const RATE_WINDOW_MS = 60_000;
+
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { allowed, retryAfterSeconds } = checkRateLimit(
+    `narrative:${ip}`,
+    RATE_LIMIT,
+    RATE_WINDOW_MS,
+  );
+  if (!allowed) {
+    return NextResponse.json(
+      { ok: false, error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+      { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
+    );
+  }
+
   const body = await request.json();
   const fdi: ParseResult | undefined = body?.fdi;
   const trade: ParseResult | undefined = body?.trade;
