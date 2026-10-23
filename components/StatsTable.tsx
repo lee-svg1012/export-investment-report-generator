@@ -27,19 +27,19 @@ export function StatsTable({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full whitespace-nowrap text-base">
         <thead>
           <tr>
             {table.columns.map((column) => (
               <th
                 key={column}
-                className="border-b border-white/10 px-2 py-1 text-left font-medium text-white"
+                className="border-b border-white/10 px-4 py-2.5 text-left font-medium text-white"
               >
                 {column}
               </th>
             ))}
             {showComparisonColumn && (
-              <th className="border-b border-white/10 px-2 py-1 text-left font-medium text-white">
+              <th className="border-b border-white/10 px-4 py-2.5 text-left font-medium text-white">
                 전기 대비 증감률
               </th>
             )}
@@ -49,13 +49,13 @@ export function StatsTable({
           {table.rows.map((row, i) => (
             <tr key={i}>
               {table.columns.map((column) => (
-                <td key={column} className="border-b border-white/5 px-2 py-1 text-zinc-300">
+                <td key={column} className="border-b border-white/5 px-4 py-2.5 text-zinc-300">
                   {row[column]}
                 </td>
               ))}
               {showComparisonColumn && (
                 <td
-                  className={`border-b border-white/5 px-2 py-1 font-medium ${comparisonColorClass(comparison[i])}`}
+                  className={`border-b border-white/5 px-4 py-2.5 font-medium ${comparisonColorClass(comparison[i])}`}
                 >
                   {formatRowComparison(comparison[i])}
                 </td>

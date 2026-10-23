@@ -14,7 +14,7 @@ async function ReportContent({ id }: { id: string }) {
   if (!report) {
     return (
       <div className="flex flex-col flex-1 items-center bg-background font-sans">
-        <main className="flex w-full max-w-3xl flex-col gap-4 px-6 py-16 sm:px-16">
+        <main className="flex w-full max-w-6xl flex-col gap-4 px-6 py-16 sm:px-16">
           <h1 className="text-2xl font-bold text-white">보고서를 찾을 수 없습니다</h1>
           <p className="text-sm text-zinc-400">링크가 올바른지 확인해주세요.</p>
         </main>
@@ -28,7 +28,7 @@ async function ReportContent({ id }: { id: string }) {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[480px] bg-[radial-gradient(ellipse_at_top,_rgba(34,197,94,0.14),_transparent_65%)]"
       />
-      <main className="flex w-full max-w-3xl flex-col gap-8 px-6 py-16 sm:px-16">
+      <main className="flex w-full max-w-6xl flex-col gap-8 px-6 py-16 sm:px-16">
         <header className="flex flex-col gap-1">
           <span className="text-xs font-medium tracking-wide text-accent uppercase">
             보고서 초안
@@ -47,8 +47,8 @@ async function ReportContent({ id }: { id: string }) {
 
         <section className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
           <h2 className="text-lg font-semibold text-white">{report.headline}</h2>
-          <p className="text-sm text-zinc-300">{report.summary}</p>
-          <p className="text-sm text-zinc-300">{report.yearly}</p>
+          <p className="text-base leading-relaxed text-zinc-300">{report.summary}</p>
+          <p className="text-base leading-relaxed text-zinc-300">{report.yearly}</p>
         </section>
 
         <ReportResultSection
@@ -73,7 +73,7 @@ async function ReportContent({ id }: { id: string }) {
             <h2 className="text-lg font-semibold text-white">
               {report.fdiCategoryColumn ?? report.tradeCategoryColumn}별 동향
             </h2>
-            <p className="text-sm text-zinc-300">{report.byCategory}</p>
+            <p className="text-base leading-relaxed text-zinc-300">{report.byCategory}</p>
           </section>
         )}
         {report.fdiCategoryTable && (
