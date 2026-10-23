@@ -1,5 +1,5 @@
 import type { ParseResult, ParsedRow } from "@/lib/stats/parseStatsFile";
-import { pickChartColumns, pickBreakdownColumn } from "@/lib/stats/pickChartColumns";
+import { pickChartColumns, pickBreakdownColumns } from "@/lib/stats/pickChartColumns";
 import { TOTAL_ROW_LABELS } from "@/lib/stats/totalRowLabels";
 
 export type CategoryFact = {
@@ -27,8 +27,14 @@ export function computeCategoryBreakdown(table: ParseResult): CategoryBreakdown 
   const chart = pickChartColumns(table);
   if (!chart) return null;
 
-  const categoryColumn = pickBreakdownColumn(table);
+  const breakdownColumns = pickBreakdownColumns(table);
+  const categoryColumn = breakdownColumns[0];
   if (!categoryColumn) return null;
+  // "지역"+"업종대분류"처럼 분류 열이 중첩된 파일에서는, 고른 분류 열(지역) 말고 다른
+  // 분류 열(업종대분류)이 전부 "합계"(또는 빈 값)인 행만 "그 분류의 기간별 합계"로 본다.
+  // 안 그러면 같은 지역·연도 밑에 있는 서로 다른 업종 행끼리 "기간"인 것처럼 잘못 비교해
+  // 말이 안 되는 증감률이 나온다(2026-10-24 실사용 중 확인 — "-100% 감소" 등 오탐).
+  const otherBreakdownColumns = breakdownColumns.slice(1);
 
   // 분류 열(국가 등)의 "합계" 행뿐 아니라, 기간 열(연도 등)이 "합계"인 행(전체 기간 총계)도
   // 빼야 한다 — 안 그러면 "2026년 대비 전체 합계" 같은 말이 안 되는 증감률이 나온다
@@ -36,11 +42,12 @@ export function computeCategoryBreakdown(table: ParseResult): CategoryBreakdown 
   const realRows = table.rows.filter((row) => {
     const categoryValue = String(row[categoryColumn] ?? "").trim();
     const periodValue = String(row[chart.labelColumn] ?? "").trim();
-    return (
-      categoryValue !== "" &&
-      !TOTAL_ROW_LABELS.includes(categoryValue) &&
-      !TOTAL_ROW_LABELS.includes(periodValue)
-    );
+    if (categoryValue === "" || TOTAL_ROW_LABELS.includes(categoryValue)) return false;
+    if (TOTAL_ROW_LABELS.includes(periodValue)) return false;
+    return otherBreakdownColumns.every((column) => {
+      const value = String(row[column] ?? "").trim();
+      return value === "" || TOTAL_ROW_LABELS.includes(value);
+    });
   });
   if (realRows.length === 0) return null;
 
