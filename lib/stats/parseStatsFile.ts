@@ -32,9 +32,24 @@ export function findAbnormalValue(value: string | number): string | null {
   return SPECIAL_CHAR_REGEX.test(value) ? `값("${value}")에 특수문자가 포함되어 있습니다` : null;
 }
 
-// "국가" 열은 대륙·권역 합계 행 등에서 원래 비어 있는 게 정상이라, 결측치 검사에서만
-// 예외로 둔다(2026-10-23, 사용자 확인). 값이 들어있을 때는 다른 열과 똑같이 검사한다.
-const BLANK_ALLOWED_COLUMNS = ["국가"];
+// "국가"처럼 글자로 된 분류 열(업종·지역 등)은 대륙·권역 합계 행에서 원래 비어 있을 수
+// 있어 결측치 검사에서 제외한다(2026-10-23, 사용자 확인). 다만 금액 같은 숫자 열까지
+// 봐주면 계산식(Number(""))이 조용히 0으로 처리돼 PRD의 "수치를 임의로 만들어내지 않는다"
+// 규칙을 어기게 되므로, 숫자 열은 지금처럼 계속 막는다. 열 이름을 하드코딩하지 않고, 그
+// 열의 실제 값이 전부 숫자인지로 "숫자 열"인지를 판단한다 — 값이 하나라도 문자면 분류 열.
+function isNumericColumn(
+  dataRows: (string | number | null)[][],
+  columnIndex: number,
+): boolean {
+  let sawValue = false;
+  for (const row of dataRows) {
+    const cell = row[columnIndex] ?? null;
+    if (cell === null || cell === "") continue;
+    sawValue = true;
+    if (typeof cell !== "number") return false;
+  }
+  return sawValue;
+}
 
 // 설계(DESIGN.md §2)대로 "형식 확인 → 파싱 → 빈 값 검사" 순서를 하나의 함수로 처리한다.
 // PRD 규칙: 빈 값/형식 오류는 추측으로 채우지 않고 몇 번째 행·열인지 구체적으로 안내한다.
@@ -135,6 +150,8 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
     };
   }
 
+  const numericColumnFlags = columns.map((_, c) => isNumericColumn(dataRows, c));
+
   const rows: ParsedRow[] = [];
   for (let r = 0; r < dataRows.length; r++) {
     const dataRow = dataRows[r];
@@ -143,7 +160,7 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
     for (let c = 0; c < columns.length; c++) {
       const value = dataRow[c] ?? null;
       if (value === null || value === "") {
-        if (BLANK_ALLOWED_COLUMNS.includes(columns[c])) {
+        if (!numericColumnFlags[c]) {
           record[columns[c]] = "";
           continue;
         }
