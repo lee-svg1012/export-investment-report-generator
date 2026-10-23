@@ -20,6 +20,18 @@ function getExtension(filename: string): string {
   return index === -1 ? "" : filename.slice(index).toLowerCase();
 }
 
+// PRD 5장 예외 처리 규칙: "결측치(빈 칸)·음수·특수문자가 섞여 있는 경우 0이나 평균 등으로
+// 임의로 채우지 않고 행·열을 짚어 안내한다." 날짜·구분 등 글자 값에 쓰이는 한글·영문·숫자·
+// 공백·일반 구두점(-, _, (, ), /, ., ,)은 허용하고, 그 외 기호만 "특수문자"로 본다.
+const SPECIAL_CHAR_REGEX = /[^\p{L}\p{N}\s\-_().,/]/u;
+
+export function findAbnormalValue(value: string | number): string | null {
+  if (typeof value === "number") {
+    return value < 0 ? `값(${value})이 음수입니다` : null;
+  }
+  return SPECIAL_CHAR_REGEX.test(value) ? `값("${value}")에 특수문자가 포함되어 있습니다` : null;
+}
+
 // 설계(DESIGN.md §2)대로 "형식 확인 → 파싱 → 빈 값 검사" 순서를 하나의 함수로 처리한다.
 // PRD 규칙: 빈 값/형식 오류는 추측으로 채우지 않고 몇 번째 행·열인지 구체적으로 안내한다.
 export async function parseStatsFile(file: File): Promise<ParseResult> {
@@ -131,6 +143,17 @@ export async function parseStatsFile(file: File): Promise<ParseResult> {
           ok: false,
           error: {
             message: `${rowNumber}번째 행, "${columns[c]}" 열 값이 비어 있습니다.`,
+            row: rowNumber,
+            column: columns[c],
+          },
+        };
+      }
+      const abnormalReason = findAbnormalValue(value);
+      if (abnormalReason) {
+        return {
+          ok: false,
+          error: {
+            message: `${rowNumber}번째 행, "${columns[c]}" 열 ${abnormalReason}. 임의로 수정하지 않으니 직접 확인해주세요.`,
             row: rowNumber,
             column: columns[c],
           },
